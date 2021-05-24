@@ -1,0 +1,6 @@
+[submodule "single_chan_pkt_fwd"]
+	path = single_chan_pkt_fwd
+	url = https://github.com/nicotrozzo/single_chan_pkt_fwd.git
+[submodule "gateway/single_chan_pkg_fwd"]
+	path = gateway/single_chan_pkg_fwd
+	url = https://github.com/nicotrozzo/single_chan_pkt_fwd.git
