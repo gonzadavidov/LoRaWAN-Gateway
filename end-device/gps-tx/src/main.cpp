@@ -1,3 +1,5 @@
+#include <Arduino.h>
+
 /*******************************************************************************
  * Copyright (c) 2015 Thomas Telkamp and Matthijs Kooijman
  *
@@ -21,22 +23,29 @@
  *
  *******************************************************************************/
 
+// LoRaTx Includes
 #include <lmic.h>
 #include <hal/hal.h>
 #include <SPI.h>
 
-// Channel in use, 0 for 868.1 MHz
-#define CHANNEL  0
+// Application LoRa definitions
+#include <lora_def.h>
+
+// GPS Constants and variables
+#define GPS_SAMPLING_PERIOD  20e3  // in ms
+float latitude = 44.4948, longitude = 11.3426;
+
 
 // LoRaWAN NwkSKey, network session key
 // This is the default Semtech key, which is used by the prototype TTN
 // network initially.
-static const PROGMEM u1_t NWKSKEY[16] = { 0x3F, 0x4F, 0x50, 0xCC, 0xA1, 0xA1, 0x50, 0xF3, 0x32, 0x0E, 0x6D, 0xEC, 0x9B, 0xE6, 0x0A, 0xEC };
+
+static const PROGMEM u1_t NWKSKEY[16] = { 0xE9, 0x84, 0x85, 0xC7, 0x19, 0xD9, 0x84, 0x9C, 0x21, 0x0E, 0x3B, 0x2F, 0x04, 0x29, 0x63, 0x4C };
 
 // LoRaWAN AppSKey, application session key
 // This is the default Semtech key, which is used by the prototype TTN
 // network initially.
-static const u1_t PROGMEM APPSKEY[16] = { 0xE9, 0x84, 0x85, 0xC7, 0x19, 0xD9, 0x84, 0x9C, 0x21, 0x0E, 0x3B, 0x2F, 0x04, 0x29, 0x63, 0x4C };
+static const u1_t PROGMEM APPSKEY[16] = { 0x8D, 0xBB, 0x4A, 0x52, 0x05, 0x7A, 0x8D, 0xF1, 0x00, 0x4C, 0x2A, 0xCF, 0xC1, 0xA3, 0xD9, 0x0B };
 
 // LoRaWAN end-device address (DevAddr)
 // See http://thethingsnetwork.org/wiki/AddressSpace
@@ -49,12 +58,14 @@ void os_getArtEui (u1_t* buf) { }
 void os_getDevEui (u1_t* buf) { }
 void os_getDevKey (u1_t* buf) { }
 
-static uint8_t mydata[] = "Hello, world!";
+static char sendBuffer[LORA_MSG_LEN + 1] = "0,0";
+static char auxBuf[10];
 static osjob_t sendjob;
+static unsigned long int startTime, currentTime;
 
 // Schedule TX every this many seconds (might become longer due to duty
 // cycle limitations).
-const unsigned TX_INTERVAL = 30;
+const unsigned TX_INTERVAL = 60;
 
 // Pin mapping
 const lmic_pinmap lmic_pins = {
@@ -70,7 +81,7 @@ void do_send(osjob_t* j){
         Serial.println(F("OP_TXRXPEND, not sending"));
     } else {
         // Prepare upstream data transmission at the next possible time.
-        LMIC_setTxData2(1, mydata, sizeof(mydata)-1, 0);
+        LMIC_setTxData2(1, sendBuffer, sizeof(sendBuffer)-1, 0);
         Serial.println(F("Packet queued"));
     }
     // Next TX is scheduled after TX_COMPLETE event.
@@ -146,6 +157,7 @@ void onEvent (ev_t ev) {
 }
 
 void setup() {
+
     Serial.begin(115200);
     Serial.println(F("Starting"));
 
@@ -188,7 +200,7 @@ void setup() {
 
     // Single Channel Opeartion, disable the other channels
     for (uint8_t i = 0; i < 9; i++) {
-        if (i != CHANNEL) {
+        if (i != LORA_CHANNEL) {
             LMIC_disableChannel(i);
         }
     }
@@ -214,8 +226,30 @@ void setup() {
 
     // Start job
     do_send(&sendjob);
+
+    startTime = millis();
+    randomSeed(analogRead(0));
 }
 
 void loop() {
     os_runloop_once();
+
+    currentTime = millis();
+    if (currentTime - startTime >= GPS_SAMPLING_PERIOD)
+    {
+        // Change 4th decimal place to move in random points of Bologna
+        latitude = 44.4948 + (random(10) / 1e4); 
+        longitude = 11.3426 + (random(10) / 1e4);
+        dtostrf(latitude, 5, 5, auxBuf);
+        sprintf(sendBuffer, "%s", auxBuf);
+        dtostrf(longitude, 5, 5, auxBuf);
+        sprintf(sendBuffer + strlen(sendBuffer), ",%s", auxBuf);
+        Serial.print(F("Latitude: "));
+        Serial.print(latitude);
+        Serial.print(F(", longitude: "));
+        Serial.print(longitude);        
+        Serial.print(F(". Measured and buffered: "));
+        Serial.println(sendBuffer);
+        startTime = currentTime;
+    }
 }

@@ -10,9 +10,7 @@ import json
 class Handler(BaseHTTPRequestHandler):
     # True -  JSON marshaler
     # False - Protobuf marshaler (binary)
-    def __init__(self, is_json):
-        super().__init__()
-        self.json = is_json
+    json = True
 
     def do_POST(self):
         self.send_response(200)
@@ -33,7 +31,11 @@ class Handler(BaseHTTPRequestHandler):
 
     def up(self, body):
         up = self.unmarshal(body, integration.UplinkEvent())
+        print(up)
         print("Uplink received from: %s with payload: %s" % (up.dev_eui.hex(), up.data.hex()))
+        # Obtain latitude and longitude from payload
+        coords = up.data.hex().split(",")
+        print(f"Lat: {coords[0]}, Long: {coords[1] if len(coords) > 1 else 0}")
 
     def join(self, body):
         join = self.unmarshal(body, integration.JoinEvent())
@@ -50,8 +52,7 @@ class Handler(BaseHTTPRequestHandler):
 with open('config.json') as config_file:
     data = json.load(config_file)
     port = data['port']
-    is_json = data['json']
-    httpd = HTTPServer(('', port), Handler(is_json))
+    httpd = HTTPServer(('', port), Handler)
     httpd.serve_forever()
 
 
