@@ -81,7 +81,7 @@ void do_send(osjob_t* j){
         Serial.println(F("OP_TXRXPEND, not sending"));
     } else {
         // Prepare upstream data transmission at the next possible time.
-        LMIC_setTxData2(1, sendBuffer, sizeof(sendBuffer)-1, 0);
+        LMIC_setTxData2(1, sendBuffer, strlen(sendBuffer), 0);
         Serial.println(F("Packet queued"));
     }
     // Next TX is scheduled after TX_COMPLETE event.
@@ -238,8 +238,8 @@ void loop() {
     if (currentTime - startTime >= GPS_SAMPLING_PERIOD)
     {
         // Change 4th decimal place to move in random points of Bologna
-        latitude = 44.4948 + (random(10) / 1e4); 
-        longitude = 11.3426 + (random(10) / 1e4);
+        latitude = 44.4948 + (random(10) / 1e3); 
+        longitude = 11.3426 + (random(10) / 1e3);
         dtostrf(latitude, 5, 5, auxBuf);
         sprintf(sendBuffer, "%s", auxBuf);
         dtostrf(longitude, 5, 5, auxBuf);

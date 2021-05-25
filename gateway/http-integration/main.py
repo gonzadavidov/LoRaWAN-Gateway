@@ -6,6 +6,7 @@ from google.protobuf.json_format import Parse
 
 import json
 
+import requests
 
 class Handler(BaseHTTPRequestHandler):
     # True -  JSON marshaler
@@ -31,11 +32,24 @@ class Handler(BaseHTTPRequestHandler):
 
     def up(self, body):
         up = self.unmarshal(body, integration.UplinkEvent())
-        print(up)
-        print("Uplink received from: %s with payload: %s" % (up.dev_eui.hex(), up.data.hex()))
+        print("Uplink received from: %s with payload: %s" % (up.dev_eui.hex(), up.data))
         # Obtain latitude and longitude from payload
-        coords = up.data.hex().split(",")
+        coords = up.data.decode("utf-8").split(",")
         print(f"Lat: {coords[0]}, Long: {coords[1] if len(coords) > 1 else 0}")
+        # Send data to ThingsSpeak
+        print("Posting data to ThingSpeak...")
+        url = "https://api.thingspeak.com/update.json"
+        body = {
+            "api_key": api_key,
+            "field1": "0",
+            "field2": "0",
+            "lat": f"{coords[0]}",
+            "long": f"{coords[1]}",
+            "status": "OK"
+        }
+        print(f"Body: {body}")
+        r = requests.post(url, data=body)
+        print(f'Response: {r.text}')
 
     def join(self, body):
         join = self.unmarshal(body, integration.JoinEvent())
@@ -48,11 +62,13 @@ class Handler(BaseHTTPRequestHandler):
         pl.ParseFromString(body)
         return pl
 
-
+api_key = ""
 with open('config.json') as config_file:
     data = json.load(config_file)
     port = data['port']
+    api_key = data['write_api_key']
     httpd = HTTPServer(('', port), Handler)
+    print(f'Server starting to listen on port {port}')
     httpd.serve_forever()
 
 
