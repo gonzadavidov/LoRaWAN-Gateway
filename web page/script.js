@@ -1,3 +1,5 @@
+let map, heatmap;
+
 const createMap = ({ lat, lng }) => {
   return new google.maps.Map(document.getElementById('map'), {
     center: { lat, lng},
@@ -6,12 +8,21 @@ const createMap = ({ lat, lng }) => {
   });
 };
 
-const createMarker = ({ map, position, image }) => {
+const createMarker = ({ position, image }) => {
   return new google.maps.Marker({ map, position, icon: image });
 };
 
-const createSafeZone = (safeZone, map) => {
+const createMarkers = ({positions, image}) => {
+  var markers = [];
+  for (let i=0; i<positions.length; i++){
+    markers.push(createMarker({position: positions[i], image: image}));
+  }
+  return markers;
+}
+
+const createSafeZone = (safeZone) => {
   return new google.maps.Polygon({
+    map: map,
     paths: safeZone,
     strokeColor: 'white',
     strokeOpacity: 0.8,
@@ -53,14 +64,25 @@ function changeOpacity() {
   heatmap.set("opacity", heatmap.get("opacity") ? null : 0.2);
 }
 
+const createHeatmap = (bicycleHistory) => {
+  return new google.maps.visualization.HeatmapLayer({
+    data: bicycleHistory,
+    map: map,
+  });
+}
+
+
 async function init() {
   const bicycle = {
                     url: "https://icon-library.com/images/bicycle-icon-png/bicycle-icon-png-20.jpg",
+                    //url: "https://www.pinclipart.com/picdir/middle/547-5476830_drone-svg-png-icon-free-download-drone-icon.png",
+
                     scaledSize: new google.maps.Size(50, 50)
                   }
   var bicyclePositions = [];
   var response = await fetch('https://api.thingspeak.com/channels/1396775/feeds.json?api_key=V4QNC2WLJQPOJJ65&location=true');
   var data = await response.json();
+  const createdAt = 'created_at';
   data["feeds"].forEach( (el) => {
     bicyclePositions.push({
       lat: Number(el["latitude"]),
@@ -79,14 +101,19 @@ async function init() {
     { lat: 44.490245, lng: 11.329655 },
     { lat: 44.499135, lng: 11.327006 },
   ];
-  const map = createMap(lastPosition);
-  const marker = createMarker({ map, position: lastPosition, image: bicycle });
-  const bolognaSafeZone = createSafeZone(safeZone, map);
-  //Set safe zone on the actual map
-  bolognaSafeZone.setMap(map);
-  const heatmap = new google.maps.visualization.HeatmapLayer({
-    data: bicyclePositions,
+  const bicycleHistory = []
+  for (let i=0; i<bicyclePositions.length; i++){
+    bicycleHistory.push(new google.maps.LatLng(bicyclePositions[i]));
+  }
+  map = createMap(lastPosition);
+  const marker = createMarker({position: lastPosition, image: bicycle });
+  const bolognaSafeZone = createSafeZone(safeZone);
+  heatmap = createHeatmap(bicycleHistory);
+  var flightPath = new google.maps.Polyline({
     map: map,
+    path: bicycleHistory,
+    strokeColor: "#FF0000",
+    strokeOpacity: 1.0,
+    strokeWeight: 2
   });
-  heatmap.setMap(map);
 }
