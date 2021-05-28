@@ -4,3 +4,6 @@
 [submodule "gateway/single_chan_pkg_fwd"]
 	path = gateway/single_chan_pkg_fwd
 	url = https://github.com/nicotrozzo/single_chan_pkt_fwd.git
+[submodule "lorawan-locations-web"]
+	path = lorawan-locations-web
+	url = https://github.com/nicotrozzo/lorawan-locations-web.git
