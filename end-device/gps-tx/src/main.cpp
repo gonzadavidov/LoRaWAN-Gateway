@@ -33,7 +33,7 @@
 
 // GPS Includes
 #include <NMEAGps.h>
-#include <SoftwareSerial.h> 
+#include <NeoSWSerial.h>
 #include <GPSport.h>
 
 
