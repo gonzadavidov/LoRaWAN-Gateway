@@ -69,7 +69,7 @@ void os_getArtEui (u1_t* buf) { }
 void os_getDevEui (u1_t* buf) { }
 void os_getDevKey (u1_t* buf) { }
 
-static char sendBuffer[LORA_MSG_LEN + 1] = "0,0";
+static char sendBuffer[LORA_MSG_LEN + 1] = "0,0,0";
 static char auxBuf[10];
 static osjob_t sendjob;
 
