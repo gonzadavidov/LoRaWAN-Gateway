@@ -70,11 +70,7 @@ static osjob_t sendjob;
 
 // Schedule TX every this many seconds (might become longer due to duty
 // cycle limitations).
-<<<<<<< HEAD
 const unsigned TX_INTERVAL = 30;
-=======
-const unsigned TX_INTERVAL = 20;
->>>>>>> 9a7ad0c11751a9bb58e53ee08e05dddf584a691c
 
 // Pin mapping
 const lmic_pinmap lmic_pins = {
