@@ -8,4 +8,6 @@
 #define LORA_MSG_LEN        20
 #define SPREADING_FACTOR    DR_SF9                                                                                                                 
 
+#define MEASUREMENT_SITE    0
+
 #endif

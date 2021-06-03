@@ -255,7 +255,7 @@ void loop() {
             dtostrf(latitude, 5, 5, auxBuf);
             sprintf(sendBuffer, "%s", auxBuf);
             dtostrf(longitude, 5, 5, auxBuf);
-            sprintf(sendBuffer + strlen(sendBuffer), ",%s", auxBuf);
+            sprintf(sendBuffer + strlen(sendBuffer), ",%s,%d", auxBuf,MEASUREMENT_SITE);
             Serial.print(F("Latitude: "));
             Serial.print(latitude);
             Serial.print(F(", longitude: "));
