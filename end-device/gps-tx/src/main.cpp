@@ -32,14 +32,19 @@
 #include <lora_def.h>
 
 // GPS Includes
+#include <NMEAGps.h>
 #include <SoftwareSerial.h> 
-#include <TinyGPS.h> 
+#include <GPSport.h>
 
 
 // GPS Constants and variables
+
+// Neo6m Constants 
+#define NEO6M_BAUDRATE 9600
+// GPS Handling variables
+NMEAGPS  gps;                   // This parses the GPS characters
+gps_fix  fix;                   // This holds on to the latest values
 float latitude, longitude;
-SoftwareSerial gpsSerial(3, 4); //rx,tx 
-TinyGPS gps;                    // create gps object 
 
 
 // LoRaWAN NwkSKey, network session key
@@ -232,18 +237,20 @@ void setup() {
     // Start job
     do_send(&sendjob);
 
-    gpsSerial.begin(9600); // Start GPS
+    gpsPort.begin(NEO6M_BAUDRATE);  // Start GPS
+
 }
 
 void loop() {
     os_runloop_once();
 
     // currentTime = millis();
-    if(gpsSerial.available())
+    if  (gps.available( gpsPort) )
     { // check for gps data 
-        if(gps.encode(gpsSerial.read()))
+        if (fix.valid.location)
         {  // encode gps data 
-            gps.f_get_position(&latitude,&longitude); // get latitude and longitude 
+            latitude = fix.latitude();
+            longitude = fix.longitude();
             dtostrf(latitude, 5, 5, auxBuf);
             sprintf(sendBuffer, "%s", auxBuf);
             dtostrf(longitude, 5, 5, auxBuf);

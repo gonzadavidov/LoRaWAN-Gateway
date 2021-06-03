@@ -2,8 +2,7 @@
 
 // GPS Includes
 #include <NMEAGps.h>
-#include <SoftwareSerial.h> 
-// #include <AltSoftSerial.h>  // 8 RX, 9 TX
+#include <NeoSWSerial.h>
 #include <GPSport.h>
 
 // Neo6m Constants 
@@ -13,14 +12,11 @@
 NMEAGPS  gps;                   // This parses the GPS characters
 gps_fix  fix;                   // This holds on to the latest values
 
-
 void setup() {
   Serial.begin(115200);
   Serial.println(F("Starting"));
 
-
   gpsPort.begin(NEO6M_BAUDRATE);
-
 }
 
 void loop() {
