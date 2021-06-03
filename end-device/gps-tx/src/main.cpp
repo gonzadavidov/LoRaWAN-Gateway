@@ -31,10 +31,13 @@
 // Application LoRa definitions
 #include <lora_def.h>
 
-// GPS Constants and variables
-#define GPS_SAMPLING_PERIOD  20e3  // in ms
-float latitude = 44.4948, longitude = 11.3426;
+// GPS Includes
+#include <SoftwareSerial.h> 
+#include <TinyGPS.h> 
 
+
+// GPS Constants and variables
+float latitude, longitude;
 
 // LoRaWAN NwkSKey, network session key
 // This is the default Semtech key, which is used by the prototype TTN
@@ -61,11 +64,10 @@ void os_getDevKey (u1_t* buf) { }
 static char sendBuffer[LORA_MSG_LEN + 1] = "0,0";
 static char auxBuf[10];
 static osjob_t sendjob;
-static unsigned long int startTime, currentTime;
 
 // Schedule TX every this many seconds (might become longer due to duty
 // cycle limitations).
-const unsigned TX_INTERVAL = 60;
+const unsigned TX_INTERVAL = 30;
 
 // Pin mapping
 const lmic_pinmap lmic_pins = {
@@ -222,34 +224,35 @@ void setup() {
     LMIC_setLinkCheckMode(0);
 
     // Set data rate and transmit power (note: txpow seems to be ignored by the library)
-    LMIC_setDrTxpow(DR_SF7,14);
+    LMIC_setDrTxpow(SPREADING_FACTOR,14);
 
     // Start job
     do_send(&sendjob);
 
     startTime = millis();
-    randomSeed(analogRead(0));
+    gpsSerial.begin(9600); // Start GPS
+
 }
 
 void loop() {
     os_runloop_once();
 
-    currentTime = millis();
-    if (currentTime - startTime >= GPS_SAMPLING_PERIOD)
-    {
-        // Change 4th decimal place to move in random points of Bologna
-        latitude = 44.4948 + (random(10) / 1e3); 
-        longitude = 11.3426 + (random(10) / 1e3);
-        dtostrf(latitude, 5, 5, auxBuf);
-        sprintf(sendBuffer, "%s", auxBuf);
-        dtostrf(longitude, 5, 5, auxBuf);
-        sprintf(sendBuffer + strlen(sendBuffer), ",%s", auxBuf);
-        Serial.print(F("Latitude: "));
-        Serial.print(latitude);
-        Serial.print(F(", longitude: "));
-        Serial.print(longitude);        
-        Serial.print(F(". Measured and buffered: "));
-        Serial.println(sendBuffer);
-        startTime = currentTime;
+    // currentTime = millis();
+    if(gpsSerial.available())
+    { // check for gps data 
+        if(gps.encode(gpsSerial.read()))
+        {  // encode gps data 
+            gps.f_get_position(&latitude,&longitude); // get latitude and longitude 
+            dtostrf(latitude, 5, 5, auxBuf);
+            sprintf(sendBuffer, "%s", auxBuf);
+            dtostrf(longitude, 5, 5, auxBuf);
+            sprintf(sendBuffer + strlen(sendBuffer), ",%s", auxBuf);
+            Serial.print(F("Latitude: "));
+            Serial.print(latitude);
+            Serial.print(F(", longitude: "));
+            Serial.print(longitude);        
+            Serial.print(F(". Measured and buffered: "));
+            Serial.println(sendBuffer);
+        }
     }
 }
