@@ -38,6 +38,9 @@
 
 // GPS Constants and variables
 float latitude, longitude;
+SoftwareSerial gpsSerial(3, 4); //rx,tx 
+TinyGPS gps;                    // create gps object 
+
 
 // LoRaWAN NwkSKey, network session key
 // This is the default Semtech key, which is used by the prototype TTN
@@ -229,9 +232,7 @@ void setup() {
     // Start job
     do_send(&sendjob);
 
-    startTime = millis();
     gpsSerial.begin(9600); // Start GPS
-
 }
 
 void loop() {
