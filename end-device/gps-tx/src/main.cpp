@@ -187,10 +187,12 @@ void loop() {
     os_runloop_once();
 
     // currentTime = millis();
-    while (gps.available( gpsPort) )
+    if(true)
+    // while (gps.available( gpsPort) )
     { // check for gps data 
         fix = gps.read();
-        if (fix.valid.location)
+        if(true)
+        // if (fix.valid.location)
         {  // encode gps data 
             latitude = fix.latitude();
             longitude = fix.longitude();
