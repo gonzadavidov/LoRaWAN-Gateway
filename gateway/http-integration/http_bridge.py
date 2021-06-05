@@ -35,17 +35,21 @@ class Handler(BaseHTTPRequestHandler):
         print("Uplink received from: %s with payload: %s" % (up.dev_eui.hex(), up.data))
         # Obtain latitude and longitude from payload
         coords = up.data.decode("utf-8").split(",")
+        print("SNR:", up.rx_info[0].lora_snr)
+        print("RSSI:",up.rx_info[0].rssi)
+        sf = up.tx_info.lora_modulation_info.spreading_factor
         print(f"Lat: {coords[0]}, Long: {coords[1] if len(coords) > 1 else 0}")
         # Send data to ThingsSpeak
         print("Posting data to ThingSpeak...")
         url = "https://api.thingspeak.com/update.json"
         body = {
             "api_key": api_key,
-            "field1": "0",
-            "field2": "0",
+            "field1": sf,
+            "field2": up.rx_info[0].rssi,
+            "field3": up.rx_info[0].lora_snr,
+            "field4": f"{coords[2]}",
             "lat": f"{coords[0]}",
-            "long": f"{coords[1]}",
-            "status": "OK"
+            "long": f"{coords[1]}"
         }
         print(f"Body: {body}")
         r = requests.post(url, data=body)
@@ -70,5 +74,7 @@ with open('config.json') as config_file:
     httpd = HTTPServer(('', port), Handler)
     print(f'Server starting to listen on port {port}')
     httpd.serve_forever()
+
+
 
 
